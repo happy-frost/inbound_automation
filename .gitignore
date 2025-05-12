@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment files
+.env
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# PyCharm or VSCode project files
+.idea/
+.vscode/
+
+# Test cache and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs and temp
+*.log
+*.tmp
+*.swp
+
+# ChromeDriver downloads (optional)
+chromedriver.exe
+chromedriver.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# ignore excel files, text file, pdf files, docx file, image files and jupyter notebook
+*.txt
+*.xlsx
+*.pdf
+*.png
+*.jpg
+*.docx
+
+*.ipynb
+
+Recommendation.md
