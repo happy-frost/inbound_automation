@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/style.css">
+    <title>Past Trips</title>
+</head>
+<body>
+    <h1>Past Trips</h1>
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Guest Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Whatspp group id</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trip in past_trips %}
+            <tr>
+                <td><a href="{{ url_for('routes.trip', trip_id=trip.id) }}">{{ trip.guest_name }}</a></td>
+                <td>{{ trip.start_date }}</td>
+                <td>{{ trip.end_date }}</td>
+                <td>
+                    {% if trip.whatsapp_group_id %}
+                        <p>{{ trip.whatsapp_group_id }}&nbsp;<a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Edit</a></p>
+                    {% else %}
+                        <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Provide whatsapp group id</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('routes.delete_trip', trip_id=trip.id) }}">delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </body>
+</html>

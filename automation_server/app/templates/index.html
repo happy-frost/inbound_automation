@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../static/style.css">
+    <title>All Trips</title>
+</head>
+<body>
+    <h1>Add Trip</h1>
+    <form action="{{ url_for('routes.add_trip_with_docx') }}" method="post" enctype="multipart/form-data">
+        <label>Upload the trip voucher here to add trip to the system</label>
+        <br>
+        <input type="file" name="input_file" typo=".docx" required>
+        <button type="submit">Upload</button>
+    </form>
+    <p>Alternative manually enter guest name, pax and start and end date</p>
+    <a href="{{ url_for('routes.add_trip_manually') }}" >Add trip manually</a>
+    <h1>Ongoing Trips</h1>
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Guest Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Whatspp group id</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trip in ongoing_trips %}
+            <tr>
+                <td><a href="{{ url_for('routes.trip', trip_id=trip.id) }}">{{ trip.guest_name }}</a></td>
+                <td>{{ trip.start_date }}</td>
+                <td>{{ trip.end_date }}</td>
+                <td>
+                    {% if trip.whatsapp_group_id %}
+                        <p>{{ trip.whatsapp_group_id }}&nbsp;<a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Edit</a></p>
+                    {% else %}
+                        <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Provide whatsapp group id</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('routes.delete_trip', trip_id=trip.id) }}">delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h1>Upcoming Trips</h1>
+    <table border="1" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Guest Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Whatspp group id</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trip in upcoming_trips %}
+            <tr>
+                <td><a href="{{ url_for('routes.trip', trip_id=trip.id) }}">{{ trip.guest_name }}</a></td>
+                <td>{{ trip.start_date }}</td>
+                <td>{{ trip.end_date }}</td>
+                <td>
+                    {% if trip.whatsapp_group_id %}
+                        <p>{{ trip.whatsapp_group_id }}&nbsp;   <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Edit</a></p>
+                    {% else %}
+                        <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Provide whatsapp group id</a>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('routes.delete_trip', trip_id=trip.id) }}">
+                        <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>    
+    <form action="{{ url_for('routes.send_trip_sheet') }}" method="post" enctype="multipart/form-data">
+        <label>Upload the transporter trip sheet here to send message to client</label>
+        <br>
+        <input type="file" name="input_file" typo=".docx" required>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>

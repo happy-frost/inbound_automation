@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="../static/style.css">
+    <title>Trip</title>
+</head>
+<body>
+    <h1>Trip {{trip.guest_name}} {{trip.start_date}}</h1>
+    <p>Guest Name: {{ trip.guest_name }}</p>
+    <p>Adults: {{trip.adults}}</p>
+    <p>Children: {{trip.children}}</p>
+    <p>Tickets</p>
+    <ul>
+        {% for ticket in trip.attraction_tickets %}
+            <li>{{ ticket.date }} - {{ ticket.name }}</li>
+        {% endfor %}
+    </ul>
+    {% if trip.whatsapp_group_id %}
+        <p>Whatsapp Group Id: {{trip.whatsapp_group_id}}</p>
+        <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Edit</a>
+    {% else %}
+        <a href="{{ url_for('routes.whatsapp_group_id', trip_id=trip.id) }}">Provide whatsapp group id</a>
+    {% endif %}
+</body>
+</html>

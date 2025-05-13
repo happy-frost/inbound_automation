@@ -1,13 +1,12 @@
 import datetime
 import copy
 
-# from flask_sqlalchemy import SQLAlchemy
-from automation_server import db
+# import db from app
+from app import db
 
 from . import exceptions
 from docx import Document
 
-# db = SQLAlchemy()
 
 class Ticket(db.Model):
     __tablename__ = 'tickets'
@@ -36,16 +35,25 @@ class Trip(db.Model):
     attraction_tickets = db.relationship('Ticket', backref='trip', lazy=True, cascade='all, delete-orphan')
     whatsapp_group_id = db.Column(db.String(100),nullable=True)
 
-    def __init__(self,file_path):
+    def __init__(self):
         self.guest_name = ""
-        self.start_date = None
-        self.end_date = None
         self.adults = 0
         self.children = 0
-        self.children_above_six = 0
         self.children_below_six = 0
         self.attraction_tickets = []
-        
+    
+    def populate_manually(self, guest_name, adults, children, children_below_six,attraction_tickets,start_date,end_date):
+        self.guest_name = guest_name
+        self.adults = adults
+        self.children = children
+        self.children_below_six = children_below_six
+        self.start_date = start_date
+        self.end_date = end_date
+
+        for ticket in attraction_tickets:
+            self.attraction_tickets.append(Ticket(ticket.name,ticket.date))
+
+    def populate_with_docx(self,file_path):
         try:
             document = Document(file_path)
         except:
@@ -58,11 +66,14 @@ class Trip(db.Model):
         for paragraph in document.paragraphs:
             if paragraph.text.startswith("Guest name"):
                 guest = paragraph.text.split("\t")[1].split(" X ")
-                self.guest_name = guest[0]
+                self.guest_name = ' '.join(guest[0].split(" ")[1:]) # to remove the mr. or ms.
                 guest_num = guest[1] # get the guest num from guest name
                 parsing_guest = True
                 continue
 
+            if paragraph.text.startswith("Flight"):
+                parsing_dates = True
+                continue
 
             if parsing_guest:
                 if paragraph.text.__contains__("+"):
@@ -70,21 +81,21 @@ class Trip(db.Model):
                 else:
                     parsing_guest = False
             
-            if paragraph.text.startswith("Flight"):
-                parsing_dates = True
-                continue
-
             if parsing_dates:
                 if paragraph.text == "":
                     parsing_dates = False
                     continue
+                
                 date = paragraph.text.split(" ")
                 if date[2] == "ARR":
-                    self.start_date = datetime.datetime.strptime(''.join(date[:2]),"%d %b")
+                    self.start_date = datetime.datetime.strptime(' '.join(date[:2] + [datetime.date.today().strftime("%y")]),"%d %b %y")
+                    if self.start_date < datetime.datetime.now():
+                        self.start_date = datetime.date(self.start_date.year + 1, self.start_date.month, self.start_date.day)
                 if date[2] == "DEP":
-                    self.end_date = datetime.datetime.strptime(''.join(date[:2]),"%d %b")
-                    print(self.end_date)
-
+                    self.end_date = datetime.datetime.strptime(' '.join(date[:2] + [datetime.date.today().strftime("%y")]),"%d %b %y")
+                    if self.end_date < datetime.datetime.now():
+                        self.end_date = datetime.date(self.end_date.year + 1, self.end_date.month, self.end_date.day)
+                    
             if paragraph.text.startswith("Tickets"):
                 guest_num_ticket = paragraph.text.split(" for ")[1] # get the guest num from tickets header
                 parsing_ticket = True
@@ -115,7 +126,10 @@ class Trip(db.Model):
                 for age in children_age:
                     if age <= 6:
                         self.children_below_six += 1
-        
+    
+    def add_whatsapp_group_id(self,group_id:str):
+        self.whatsapp_group_id = group_id
+
     def tickets_to_buy(self):
         tickets_to_buy = copy.deepcopy(self.attraction_tickets)
         
