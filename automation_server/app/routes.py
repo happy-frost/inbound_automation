@@ -1,10 +1,15 @@
 import os
+import time
+from random import randint
+
 from werkzeug.utils import secure_filename
 from flask import Blueprint, request, request, redirect, url_for, render_template, current_app
 from sqlalchemy import func
+
 from datetime import date, datetime
 from .models.trip import Trip, Ticket
 from .utils.transfer_message import Customer_Tranfer, get_customer_transfers
+from .utils.whatsapp_service import get_whatsapp_service
 from . import db 
 
 bp = Blueprint('routes', __name__)
@@ -69,6 +74,27 @@ def add_trip_manually():
         return redirect(url_for('routes.trip',trip_id=new_trip.id))
     return render_template("add_trip.html")
 
+@bp.route('/add-ticket/<int:trip_id>',methods=['POST'])
+def add_ticket(trip_id):
+    trip = Trip.query.get_or_404(trip_id)
+    if not trip:
+        return "Trip not found"
+    
+    uploaded_file = request.files.getlist('input_file')
+
+    if not uploaded_file:
+        return "No file uploaded", 400
+    
+    for file in uploaded_file:
+        filepath = file.filename  # This includes the folder path from client
+        newfilepath = trip.guest_name + '/' + '/'.join(filepath.split("/")[1:]) # add tickets with root file name as guest_name accoridng to trip id
+        upload_folder = current_app.config['TICKET']
+        file_path = os.path.join(upload_folder, newfilepath)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        file.save(file_path)
+
+    return 'Folder uploaded successfully!'
+
 @bp.route('/delete-trip/<int:trip_id>', methods=['POST'])
 def delete_trip(trip_id):
     trip = Trip.query.get_or_404(trip_id)
@@ -98,36 +124,78 @@ def trip(trip_id):
 
 @bp.route('/send-trip-sheet', methods=['POST'])
 def send_trip_sheet():
-    uploaded_file = request.files.get('input_file')
-    if not uploaded_file:
-        return "No file uploaded", 400
+    try:
+        uploaded_file = request.files.get('input_file')
+        if not uploaded_file:
+            return "No file uploaded", 400
 
-    # save file
-    filename = secure_filename(uploaded_file.filename)
-    upload_folder = current_app.config['TRANSPORTER_TRIP_SHEET']
-    file_path = os.path.join(upload_folder, filename)
-    uploaded_file.save(file_path)
+        # save file
+        filename = secure_filename(uploaded_file.filename)
+        upload_folder = current_app.config['TRANSPORTER_TRIP_SHEET']
+        file_path = os.path.join(upload_folder, filename)
+        uploaded_file.save(file_path)
 
-    # get customer transfers from transporter trip sheet
-    customer_transfer = get_customer_transfers(file_path)
-    if not customer_transfer:
-        return "failed"
-    missing_trip = []
-    message = []
-    for customer in customer_transfer:
-        trip = Trip.query.filter(
-        func.lower(Trip.guest_name) == func.lower(customer.guest_name),
-        func.date(Trip.start_date) <= func.date(customer.date),
-        func.date(Trip.end_date) >= func.date(customer.date)).all()
-        if not trip:
-            missing_trip.append(customer.guest_name)
-        else:
-            print("go to whatsapp chat:",trip[0].whatsapp_group_id)
-            print("send whatsapp message:",customer.output_message())
-        message.append(customer.output_message())
+        # get customer transfers from transporter trip sheet
+        customer_transfers = get_customer_transfers(file_path)
+        whatsapp = get_whatsapp_service()
+
+        if not customer_transfers:
+            return "failed"
+        errors = {}
+        for customer in customer_transfers:
+            trip = Trip.query.filter(
+            func.lower(Trip.guest_name) == func.lower(customer.guest_name),
+            func.date(Trip.start_date) <= func.date(customer.date),
+            func.date(Trip.end_date) >= func.date(customer.date)).all()
+            if not trip:
+                errors["missing_trip"] = errors.get("missing_trip",[]) + [customer.guest_name]
+            elif not trip[0].whatsapp_group_id:
+                errors["missing_whatsapp_group_id"] = errors.get("missing_whatsapp_group_id",[]) + [customer.guest_name]
+            else:
+                goToChat = whatsapp.go_to_chat(trip[0].whatsapp_group_id)
+                sentMessage = whatsapp.send_message(customer.output_message())
+                if not goToChat or not sentMessage:
+                    errors["error_sending_message"] = errors.get("sending_message",[]) + [customer.guest_name]
+
+            
+            # Send tickets
+            # Find the tickets for the day
+            ticket_folder = current_app.config['TICKET']
+            path1 = os.path.join(ticket_folder, customer.guest_name)
+            path2 = os.path.join(path1, datetime.strftime(customer.date,"%d %b %Y"))
+
+            if not os.path.isdir(path1):
+                # if no ticket file
+                continue
+            
+            if not os.path.isdir(path2):
+                # if not ticket for today
+                continue
+            
+            # Get all files (not directories) inside the second folder
+            files = [f for f in os.listdir(path2) if os.path.isfile(os.path.join(path2, f))]
+            for filename in files:
+                filepath = os.path.join(path2,filename)
+                sentTickets = whatsapp.send_document(filepath)
+                time.sleep(randint(3,6))
+                if not sentTickets:
+                    errors["error_sending_ticket"] = errors.get("sending_message",[]) + [filename]
+                
+        if len(errors) != 0:
+            out = []
+            for error, customer_name in errors.items():
+                out.append(f'<p>{error}: {customer_name}</p>')
+            return ''.join(out)
         
-    if missing_trip:
-        out = "Missing trip:\n" + '\n'.join(missing_trip)
-        return out
-    return "success"
+        return "success"
+    except:
+        return "An error occurred"
 
+@bp.route('/whatsapp/login')
+def whatsapp_login():
+    try:
+        whatsapp = get_whatsapp_service()
+        whatsapp.login()
+        return "Successfully logged in to whatsapp"
+    except:
+        return "an error occurred"

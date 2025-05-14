@@ -40,6 +40,7 @@ Thumbs.db
 
 # ignore excel files, text file, pdf files, docx file, image files and jupyter notebook
 *.txt
+*.xls
 *.xlsx
 *.pdf
 *.png
