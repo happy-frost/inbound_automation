@@ -34,6 +34,10 @@ dist/
 chromedriver.exe
 chromedriver.log
 
+# ChromeProfile
+ChromeProfile
+ChromeProfile/*
+
 # OS-specific
 .DS_Store
 Thumbs.db
@@ -48,5 +52,7 @@ Thumbs.db
 *.docx
 
 *.ipynb
+
+*.json
 
 Reccomendation.md

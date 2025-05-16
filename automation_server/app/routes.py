@@ -195,7 +195,6 @@ def send_trip_sheet():
 def whatsapp_login():
     try:
         whatsapp = get_whatsapp_service()
-        whatsapp.login()
         return "Successfully logged in to whatsapp"
     except:
         return "an error occurred"
