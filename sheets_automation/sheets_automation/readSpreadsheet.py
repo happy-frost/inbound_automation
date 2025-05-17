@@ -100,6 +100,7 @@ class ReadSpreadsheet:
 
         # put the SIC and PVT transfer together and sort by time (string sort works since it is using 24 hour time format)
         output_df = pd.concat([filtered_sic_df, filtered_pvt_df],ignore_index=True)
+        output_df['Date'] = output_df['Date'].dt.date
         output_df.sort_values(by="Time",inplace=True)
         output_path = os.path.join(folder,output_name)
         if not output_df.empty:
