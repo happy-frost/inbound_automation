@@ -17,7 +17,7 @@ whatsapp_chat = os.getenv("WHATSAPP_CHAT")
 if __name__ == "__main__":
     try:
         spreadsheet = ReadSpreadsheet(excel_name)
-        hasTripsheet, path = spreadsheet.get_A2C_tripsheet(folder="A2C Trip Sheet")
+        hasTripsheet, path = spreadsheet.get_A2C_tripsheet(folder="Trip Sheet For Transporter")
         full_path = os.path.normpath(os.path.join(Path(__file__).parent,path))
 
         whatsapp = Whatsapp(user_data_dir,profile_directory)

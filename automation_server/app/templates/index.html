@@ -89,14 +89,17 @@
     </table>
     <br>
     <h1>Messaging</h1>      
-    <a href="{{ url_for('routes.whatsapp_login') }}">Login to whatsapp</a>
-    <br>
+    <a href="{{ url_for('routes.send_trip_sheet') }}">Send today's trip sheet to customer</a>
+    <p>Information will be obtained from whatsapp chat with transporter</p>
+
+    <!-- <a href="{{ url_for('routes.whatsapp_login') }}">Login to whatsapp</a> -->
+    <!-- <br>
     <br>
     <form action="{{ url_for('routes.send_trip_sheet') }}" method="post" enctype="multipart/form-data">
         <label>Upload the transporter trip sheet here to send message to client</label>
         <input type="file" name="input_file" accept=".xlsx *.xls" required>
         <button type="submit">Upload</button>
-    </form>
+    </form> -->
 
 </body>
 </html>

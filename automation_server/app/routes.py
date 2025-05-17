@@ -2,6 +2,9 @@ import os
 import time
 from random import randint
 
+from pathlib import Path
+from dotenv import load_dotenv
+
 from werkzeug.utils import secure_filename
 from flask import Blueprint, request, request, redirect, url_for, render_template, current_app
 from sqlalchemy import func
@@ -15,6 +18,12 @@ from . import db
 bp = Blueprint('routes', __name__)
 
 upload_bp = Blueprint('upload', __name__, template_folder='../templates')
+
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
+source_folder = os.getenv("SOURCE_FOLDER")
+transporter_group_id = os.getenv("TRANSPORTER_CHAT_GROUP_ID")
 
 @bp.route('/')
 def index():
@@ -122,22 +131,24 @@ def trip(trip_id):
     trip = Trip.query.get_or_404(trip_id)
     return render_template('trip.html', trip=trip)
 
-@bp.route('/send-trip-sheet', methods=['POST'])
+@bp.route('/send-trip-sheet')
 def send_trip_sheet():
     try:
-        uploaded_file = request.files.get('input_file')
-        if not uploaded_file:
-            return "No file uploaded", 400
+        whatsapp = get_whatsapp_service()
+        
+        target_file_name = "ODY" + datetime.strftime(datetime.now(),"%Y%m%d") + ".xlsx"
+        destination_folder = os.path.join(os.getcwd(), "trip_sheet/transporter")
 
-        # save file
-        filename = secure_filename(uploaded_file.filename)
-        upload_folder = current_app.config['TRANSPORTER_TRIP_SHEET']
-        file_path = os.path.join(upload_folder, filename)
-        uploaded_file.save(file_path)
-
+        isSuccess = whatsapp.go_to_chat(transporter_group_id)
+        if not isSuccess:
+            return "Cannot find chat"
+        hasTodayTripSheet = whatsapp.find_file(target_file_name,source_folder,destination_folder)
+        if not hasTodayTripSheet:
+            return "No trip sheet for today"
+        
+        file_path = os.path.join(destination_folder,target_file_name)
         # get customer transfers from transporter trip sheet
         customer_transfers = get_customer_transfers(file_path)
-        whatsapp = get_whatsapp_service()
 
         if not customer_transfers:
             return "failed"
