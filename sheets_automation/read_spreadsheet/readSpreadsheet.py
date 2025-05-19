@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 import json
@@ -8,8 +9,18 @@ import pandas as pd
 from datetime import datetime, timedelta
 from oauth2client.service_account import ServiceAccountCredentials
 
-env_path = Path(__file__).parent.parent / ".env"
+def get_exe_dir():
+    if getattr(sys, 'frozen', False):
+        # If running from a PyInstaller bundle
+        return Path(sys.executable).parent
+    else:
+        # If running from source
+        return Path(__file__).resolve().parent.parent
+
+# Use the correct runtime path for .env
+env_path = get_exe_dir() / ".env"
 load_dotenv(dotenv_path=env_path)
+
 json_key = os.getenv("JSON_KEY")
 
 # Setup credentials
@@ -102,6 +113,10 @@ class ReadSpreadsheet:
         output_df = pd.concat([filtered_sic_df, filtered_pvt_df],ignore_index=True)
         output_df['Date'] = output_df['Date'].dt.date
         output_df.sort_values(by="Time",inplace=True)
+
+        if not os.path.exists(folder):           
+            os.makedirs(folder)
+        
         output_path = os.path.join(folder,output_name)
         if not output_df.empty:
             output_df.to_excel(output_path, index=False)

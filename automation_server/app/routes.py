@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from random import randint
 
@@ -19,7 +20,16 @@ bp = Blueprint('routes', __name__)
 
 upload_bp = Blueprint('upload', __name__, template_folder='../templates')
 
-env_path = Path(__file__).parent.parent / ".env"
+def get_exe_dir():
+    if getattr(sys, 'frozen', False):
+        # If running from a PyInstaller bundle
+        return Path(sys.executable).parent
+    else:
+        # If running from source
+        return Path(__file__).resolve().parent.parent
+
+
+env_path = get_exe_dir() / ".env"
 load_dotenv(dotenv_path=env_path)
 
 source_folder = os.getenv("SOURCE_FOLDER")
@@ -199,7 +209,9 @@ def send_trip_sheet():
             return ''.join(out)
         
         return "success"
-    except:
+    except Exception as e:
+        print(e)
+
         return "An error occurred"
 
 @bp.route('/whatsapp/login')

@@ -35,8 +35,7 @@ chromedriver.exe
 chromedriver.log
 
 # ChromeProfile
-ChromeProfile
-ChromeProfile/*
+ChromeProfile/
 
 # OS-specific
 .DS_Store
@@ -54,5 +53,7 @@ Thumbs.db
 *.ipynb
 
 *.json
+
+*.zip
 
 Reccomendation.md

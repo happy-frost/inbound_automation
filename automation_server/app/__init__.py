@@ -1,12 +1,21 @@
+import os
+import sys
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-import os
-
 db = SQLAlchemy()
 
-def create_app():
-    app = Flask(__name__)
+def create_app():   
+    def get_base_path():
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        return os.path.dirname(__file__)
+
+    instance_path = os.path.join(get_base_path(), 'instance')
+    os.makedirs(instance_path, exist_ok=True)
+
+    app = Flask(__name__, instance_path=instance_path)
 
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'app.sqlite')}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -42,4 +51,4 @@ if __name__ == "__main__":
     # Create database and tables if not exist
     app = create_app()
     
-    app.run(debug=True)
+    app.run()

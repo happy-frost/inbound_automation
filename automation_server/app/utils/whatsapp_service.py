@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -7,13 +8,23 @@ from selenium.common.exceptions import WebDriverException
 
 from whatsapp_automation import Whatsapp
 
-env_path = Path(__file__).parent.parent / ".env"
+def get_exe_dir():
+    if getattr(sys, 'frozen', False):
+        # If running from a PyInstaller bundle
+        return Path(sys.executable).parent
+    else:
+        # If running from source
+        return Path(__file__).resolve().parent.parent
+
+# Use the correct runtime path for .env
+env_path = get_exe_dir() / ".env"
 load_dotenv(dotenv_path=env_path)
 
 user_data_dir = os.getenv("USER_DATA_DIR")
 profile_dir = os.getenv("PROFILE_DIRECTORY")
 
 def get_whatsapp_service():
+    print(user_data_dir)
     # Check if already initialized
     if hasattr(current_app, 'whatsapp_service'):
         service = current_app.whatsapp_service
