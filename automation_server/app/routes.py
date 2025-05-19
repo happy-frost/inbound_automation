@@ -146,7 +146,7 @@ def send_trip_sheet():
     try:
         whatsapp = get_whatsapp_service()
         
-        target_file_name = "ODY" + datetime.strftime(datetime.now(),"%Y%m%d") + ".xlsx"
+        target_file_name = "ody" + datetime.strftime(datetime.now(),"%Y%m%d") + ".xlsx"
         destination_folder = os.path.join(os.getcwd(), "trip_sheet/transporter")
 
         isSuccess = whatsapp.go_to_chat(transporter_group_id)

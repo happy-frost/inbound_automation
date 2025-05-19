@@ -24,7 +24,10 @@ class Customer_Tranfer:
     def output_message(self):
         out = []
         for t in self.transfers:
-            out.append(f'{t.time}\nFrom: {t.from_loc.capitalize()}\nTo: {t.to_loc.capitalize()}\nType: {t.tour}\nDriver: {t.driver}\nVehicle Number: {t.vehicle_number}\nContact: {t.contact}\n\n')        
+            if t.vehicle_number:
+                out.append(f'{t.time}\nFrom: {t.from_loc.capitalize()}\nTo: {t.to_loc.capitalize()}\nType: {t.tour}\nContact Person: {t.driver}\nVehicle Number: {t.vehicle_number}\nContact: {t.contact}\n\n')        
+            else:
+                out.append(f'{t.time}\nFrom: {t.from_loc.capitalize()}\nTo: {t.to_loc.capitalize()}\nType: {t.tour}\nContact Person: {t.driver}\nContact: {t.contact}\n\n')
         return ''.join(out)
 
     def additional_message(self,special_location: list[str]):
@@ -47,9 +50,18 @@ def get_customer_transfers(file_path):
             details = row.DETAILS.split(" ")
             driver = details[0]
             # Check that full vehicle number (contain both alpha and numeric) otherwise combine with next item on list
-            vehicle_number = details[1] if re.search('^[a-zA-Z]*\\d',details[1]) else ''.join(details[1:3])
+            if re.search('^[a-zA-Z]*\\d',details[1]):
+                vehicle_number = details[1]  
+            elif re.search('^[a-zA-Z]*\\d', ''.join(details[1:3])):
+                vehicle_number = ''.join(details[1:3])
+            else:
+                vehicle_number = ''
             # Check that last item has country code otherwise combine with second last item)
             contact = details[-1] if details[-1].startswith("+65") else "".join(details[-2:])
+
+            if driver.strip().lower() == "roselin":
+                driver = "Irvinder"
+                contact = "+6591808379"
 
             match = {c.guest_name: c for c in customer_transfers if c.guest_name == row.Guest}
             if len(match) == 0:
