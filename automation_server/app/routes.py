@@ -211,7 +211,6 @@ def send_trip_sheet():
         return "success"
     except Exception as e:
         print(e)
-
         return "An error occurred"
 
 @bp.route('/whatsapp/login')
